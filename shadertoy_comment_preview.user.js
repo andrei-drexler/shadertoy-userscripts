@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy comment preview
 // @namespace    http://tampermonkey.net/
-// @version      0.1.20190214
+// @version      0.2.20190214
 // @description  Preview comments before submitting them
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -23,9 +23,10 @@
     myComments.style.tabSize = 4; // for Fabrice :)
     commentTextArea.style.resize = "vertical";
     commentTextArea.style.minHeight = "4em";
+    commentTextArea.style.marginBottom = "12px";
 
     let previewArea = document.createElement("div");
-    previewArea.style = "margin-top: 0px; margin-bottom: 8px; width: 100%; min-height: 3em; display: none;";
+    previewArea.style = "margin-top: 0px; margin-bottom: 12px; width: 100%; min-height: 3em; display: none;";
     previewArea.className = "commentSelf";
     previewArea.classList.add("commentContent");
     commentTextArea.parentElement.insertBefore(previewArea, commentTextArea);
