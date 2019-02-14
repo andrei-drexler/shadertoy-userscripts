@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy comment preview
 // @namespace    http://tampermonkey.net/
-// @version      0.2.20190214
+// @version      0.3.20190214
 // @description  Preview comments before submitting them
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -40,18 +40,22 @@
 
     let editing = true;
 
-    function updatePreview() {
+    function updatePreview(set_focus) {
         if (editing) {
             previewButton.value = "Preview";
             commentTextArea.style.display = "";
             previewArea.style.display = "none";
-            commentTextArea.focus();
+            if (set_focus) {
+                commentTextArea.focus();
+            }
         } else {
             previewButton.value = "Edit";
             commentTextArea.style.display = "none";
             previewArea.style.display = "inline-block";
             previewArea.innerHTML = window.bbc2html(window.htmlEntities(commentTextArea.value),true);
-            previewButton.focus();
+            if (set_focus) {
+                previewButton.focus();
+            }
         }
     }
 
@@ -59,15 +63,15 @@
     window.validateComment = function(form) {
         let result = oldValidateComment(form);
         editing = true;
-        updatePreview();
+        updatePreview(true);
         return result;
     }
 
     previewButton.onclick = function() {
         editing = !editing || !window.checkFormComment(commentTextArea.value);
-        updatePreview();
+        updatePreview(true);
         return false;
     };
 
-    updatePreview();
+    updatePreview(false);
 })();
