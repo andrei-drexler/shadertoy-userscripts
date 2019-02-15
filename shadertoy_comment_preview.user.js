@@ -35,7 +35,7 @@
     previewButton.id = "myPreviewButton";
     previewButton.type = "submit";
     previewButton.style = "display:inline-block;right:95px;position:absolute;";
-    previewButton.className = 'formButton';
+    previewButton.className = "formButton";
     postButton.parentElement.appendChild(previewButton);
 
     let editing = true;
