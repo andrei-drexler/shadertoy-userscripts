@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy FPS mode
 // @namespace    http://tampermonkey.net/
-// @version      0.4.20190605
+// @version      0.5.20190605
 // @description  Less restrictive mouse input with new, switchable FPS mode
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -9,6 +9,8 @@
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
+
+/* global gShaderToy, gThemeName, watchInit:true */
 
 (function() {
     'use strict';
@@ -30,7 +32,7 @@
         lockStatusDiv.className = "uiButton";
         lockStatusDiv.style = "width:22px;height:22px;top:1px;right:164px;position:absolute;";
         var updateStatus = function() {
-            var theme = (window.gThemeName == "dark") ? 1 : 0;
+            var theme = (gThemeName == "dark") ? 1 : 0;
             if (lockStatus) {
                 lockStatusDiv.title = "Disable FPS mode";
                 lockStatusDiv.style.background = icon_off[theme];
@@ -38,8 +40,8 @@
                 lockStatusDiv.title = "Enable FPS mode";
                 lockStatusDiv.style.background = icon_on[theme];
             }
-            if (window.gShaderToy && window.gShaderToy.mCanvas) {
-                window.gShaderToy.mCanvas.focus();
+            if (gShaderToy && gShaderToy.mCanvas) {
+                gShaderToy.mCanvas.focus();
             }
         };
         updateStatus();
@@ -50,11 +52,11 @@
         playerBar.appendChild(lockStatusDiv);
     }
 
-    var oldWatchInit = window.watchInit;
-    window.watchInit = function() {
+    var oldWatchInit = watchInit;
+    watchInit = function() {
         oldWatchInit();
 
-        var canvas = window.gShaderToy.mCanvas;
+        var canvas = gShaderToy.mCanvas;
         var oldOnMouseDown = canvas.onmousedown;
         var oldOnMouseUp = canvas.onmouseup;
         var oldOnMouseMove = canvas.onmousemove;
@@ -71,18 +73,21 @@
         }, false);
 
         canvas.onmousedown = function(ev) {
-            if (document.pointerLockElement === canvas)
+            if (document.pointerLockElement === canvas) {
                 return;
+            }
             mCurrentX = ev.clientX;
             mCurrentY = ev.clientY;
-            if (lockStatus)
+            if (lockStatus) {
                 canvas.requestPointerLock();
+            }
             oldOnMouseDown(ev);
         }
 
         canvas.onmouseup = function(ev) {
-            if (document.pointerLockElement !== canvas)
+            if (document.pointerLockElement !== canvas) {
                 oldOnMouseUp(ev);
+            }
         }
 
         canvas.onmousemove = function(ev) {
