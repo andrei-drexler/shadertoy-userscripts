@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy FPS mode
 // @namespace    http://tampermonkey.net/
-// @version      0.3.20190214
+// @version      0.4.20190605
 // @description  Less restrictive mouse input with new, switchable FPS mode
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -37,6 +37,9 @@
             } else {
                 lockStatusDiv.title = "Enable FPS mode";
                 lockStatusDiv.style.background = icon_on[theme];
+            }
+            if (window.gShaderToy && window.gShaderToy.mCanvas) {
+                window.gShaderToy.mCanvas.focus();
             }
         };
         updateStatus();
