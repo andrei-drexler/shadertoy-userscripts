@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy GPU timing
 // @namespace    http://tampermonkey.net/
-// @version      0.1.20190704
+// @version      0.2.20190704
 // @description  Per-pass GPU timing HUD (click framerate display to toggle)
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -56,12 +56,11 @@
     };
 
     /* override pass initialization to create timer queries */
-    let oldEffectPass = EffectPass;
-    let oldEffectPassProto = EffectPass.prototype;
-    EffectPass = function( renderer, is20, hasShaderTextureLOD, callback, obj, forceMuted, forcePaused, outputGainNode, copyProgram, id, effect ) {
-        let result = new oldEffectPass( renderer, is20, hasShaderTextureLOD, callback, obj, forceMuted, forcePaused, outputGainNode, copyProgram, id, effect );
-        if (ext) {
-            result.mTiming = {
+    let oldEffectPassCreate = EffectPass.prototype.Create;
+    EffectPass.prototype.Create = function(...args) {
+        let result = oldEffectPassCreate.apply(this, args);
+        if (this.mType != "common" && this.mType != "sound") {
+            this.mTiming = {
                 query: Array.from({length: NUM_QUERIES}, () => gl.createQuery()),
                 cursor: 0,
                 wait: NUM_QUERIES,
@@ -71,7 +70,6 @@
         }
         return result;
     };
-    EffectPass.prototype = oldEffectPassProto;
 
     /* override pass drawing function to issue timer queries */
     let oldEffectPassPaint = EffectPass.prototype.Paint;
