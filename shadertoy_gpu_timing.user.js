@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy GPU timing
 // @namespace    http://tampermonkey.net/
-// @version      0.2.20190704
+// @version      0.3.20190706
 // @description  Per-pass GPU timing HUD (click framerate display to toggle)
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -32,7 +32,7 @@
         return;
     }
 
-    /* override initialization to grab extension */
+    /* override renderer initialization to grab extension */
     let ext = undefined;
     let gl = undefined;
     let oldRenderer = piRenderer;
@@ -69,6 +69,17 @@
             };
         }
         return result;
+    };
+
+    /* override pass cleanup to delete timer queries */
+    let oldEffectPassDestroy = EffectPass.prototype.Destroy;
+    EffectPass.prototype.Destroy = function(...args) {
+        if (this.mTiming) {
+            for (let query of this.mTiming.query)
+                gl.deleteQuery(query);
+            this.mTiming = null;
+        }
+        return oldEffectPassDestroy.apply(this, args);
     };
 
     /* override pass drawing function to issue timer queries */
