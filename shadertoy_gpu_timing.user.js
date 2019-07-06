@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy GPU timing
 // @namespace    http://tampermonkey.net/
-// @version      0.6.20190706
+// @version      0.7.20190706
 // @description  Per-pass GPU timing HUD (click framerate display to toggle)
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -16,7 +16,7 @@
 (function() {
     'use strict';
 
-    const NUM_QUERIES = 4,
+    const NUM_QUERIES = 8,
           HUD_WIDTH = 120,
           FONT = "12px Tahoma, Arial",
           HI_COLOR = [255, 128, 64],
