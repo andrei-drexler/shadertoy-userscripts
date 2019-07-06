@@ -183,7 +183,7 @@
 
         let numPasses = 0,
             maxPassTime = 0,
-            minPassTime = Number.MAX_VALUE
+            minPassTime = Number.MAX_VALUE;
 
         for (let pass of gShaderToy.mEffect.mPasses) {
             let timing = pass.mTiming;
