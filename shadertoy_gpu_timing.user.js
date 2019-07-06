@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy GPU timing
 // @namespace    http://tampermonkey.net/
-// @version      0.3.20190706
+// @version      0.4.20190706
 // @description  Per-pass GPU timing HUD (click framerate display to toggle)
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -59,7 +59,7 @@
     let oldEffectPassCreate = EffectPass.prototype.Create;
     EffectPass.prototype.Create = function(...args) {
         let result = oldEffectPassCreate.apply(this, args);
-        if (this.mType != "common" && this.mType != "sound") {
+        if (gl && ext && this.mType != "common" && this.mType != "sound") {
             this.mTiming = {
                 query: Array.from({length: NUM_QUERIES}, () => gl.createQuery()),
                 cursor: 0,
