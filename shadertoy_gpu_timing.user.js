@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy GPU timing
 // @namespace    http://tampermonkey.net/
-// @version      0.5.20190706
+// @version      0.6.20190706
 // @description  Per-pass GPU timing HUD (click framerate display to toggle)
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -173,7 +173,6 @@
     let perfCtx = perfCanvas.getContext("2d");
     perfCtx.font = FONT;
     perfCtx.textBaseline = "middle";
-    perfCtx.shadowBlur = 1;
     perfCtx.shadowOffsetX = 1;
     perfCtx.shadowOffsetY = 1;
 
