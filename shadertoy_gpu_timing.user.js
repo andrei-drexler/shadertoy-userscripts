@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy GPU timing
 // @namespace    http://tampermonkey.net/
-// @version      0.4.20190706
+// @version      0.5.20190706
 // @description  Per-pass GPU timing HUD (click framerate display to toggle)
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 /* global gShaderToy, piRenderer:true, piRequestFullScreen:true, EffectPass:true */
-/* eslint curly: 0 */
+/* eslint curly: 0, no-multi-spaces: 0 */
 
 (function() {
     'use strict';
@@ -33,22 +33,48 @@
     }
 
     /* override renderer initialization to grab extension */
-    let ext = undefined;
-    let gl = undefined;
+    let mTimingSupport = undefined;
     let oldRenderer = piRenderer;
     piRenderer = function() {
         let renderer = oldRenderer();
         let init = renderer && renderer.Initialize;
         if (init) {
-            renderer.Initialize = function(context) {
-                let result = init(context);
-                ext = result && context && context.getExtension('EXT_disjoint_timer_query_webgl2');
+            renderer.Initialize = function(gl) {
+                let result = init(gl);
+                if (!result || !gl)
+                    return result;
+
+                let ext = gl instanceof WebGL2RenderingContext && gl.getExtension('EXT_disjoint_timer_query_webgl2');
                 if (ext) {
                     console.log("Found EXT_disjoint_timer_query_webgl2 extension");
-                    gl = context;
-                } else {
-                    console.log("EXT_disjoint_timer_query_webgl2 not found, timing disabled");
+                    mTimingSupport = {
+                        createQuery:   function()      { return gl.createQuery(); },
+                        deleteQuery:   function(query) { return gl.deleteQuery(query); },
+                        beginQuery:    function(query) { return gl.beginQuery(ext.TIME_ELAPSED_EXT, query); },
+                        endQuery:      function()      { return gl.endQuery(ext.TIME_ELAPSED_EXT); },
+                        isAvailable:   function(query) { return gl.getQueryParameter(query, gl.QUERY_RESULT_AVAILABLE); },
+                        isDisjoint:    function()      { return gl.getParameter(ext.GPU_DISJOINT_EXT); },
+                        getResult:     function(query) { return gl.getQueryParameter(query, gl.QUERY_RESULT); }
+                    };
+                    return result;
                 }
+
+                ext = gl instanceof WebGLRenderingContext && gl.getExtension('EXT_disjoint_timer_query');
+                if (ext) {
+                    console.log("Found EXT_disjoint_timer_query extension");
+                    mTimingSupport = {
+                        createQuery:   function()      { return ext.createQueryEXT(); },
+                        deleteQuery:   function(query) { return ext.deleteQueryEXT(query); },
+                        beginQuery:    function(query) { return ext.beginQueryEXT(ext.TIME_ELAPSED_EXT, query); },
+                        endQuery:      function()      { return ext.endQueryEXT(ext.TIME_ELAPSED_EXT); },
+                        isAvailable:   function(query) { return ext.getQueryObjectEXT(query, ext.QUERY_RESULT_AVAILABLE_EXT); },
+                        isDisjoint:    function()      { return gl.getParameter(ext.GPU_DISJOINT_EXT); },
+                        getResult:     function(query) { return ext.getQueryObjectEXT(query, ext.QUERY_RESULT_EXT); }
+                    };
+                    return result;
+                }
+
+                console.log("Timing extension not found, timing disabled.");
                 return result;
             };
         }
@@ -59,13 +85,13 @@
     let oldEffectPassCreate = EffectPass.prototype.Create;
     EffectPass.prototype.Create = function(...args) {
         let result = oldEffectPassCreate.apply(this, args);
-        if (gl && ext && this.mType != "common" && this.mType != "sound") {
+        if (mTimingSupport && this.mType != "common" && this.mType != "sound") {
             this.mTiming = {
-                query: Array.from({length: NUM_QUERIES}, () => gl.createQuery()),
+                query: Array.from({length: NUM_QUERIES}, () => mTimingSupport.createQuery()),
                 cursor: 0,
                 wait: NUM_QUERIES,
                 accumTime: 0,
-                accumSamples: 0,
+                accumSamples: 0
             };
         }
         return result;
@@ -76,7 +102,7 @@
     EffectPass.prototype.Destroy = function(...args) {
         if (this.mTiming) {
             for (let query of this.mTiming.query)
-                gl.deleteQuery(query);
+                mTimingSupport.deleteQuery(query);
             this.mTiming = null;
         }
         return oldEffectPassDestroy.apply(this, args);
@@ -87,20 +113,20 @@
     EffectPass.prototype.Paint = function(...args) {
         let timing = this.mTiming;
         if (timing) {
-            gl.beginQuery(ext.TIME_ELAPSED_EXT, timing.query[timing.cursor]);
+            mTimingSupport.beginQuery(timing.query[timing.cursor]);
         }
         let result = oldEffectPassPaint.apply(this, args);
         if (timing) {
-            gl.endQuery(ext.TIME_ELAPSED_EXT);
+            mTimingSupport.endQuery();
             timing.cursor = (timing.cursor + 1) % timing.query.length;
             if (timing.wait > 0) {
                 --timing.wait;
             } else {
                 let prev = timing.cursor;
-                let available = gl.getQueryParameter(timing.query[prev], gl.QUERY_RESULT_AVAILABLE);
-                let disjoint = gl.getParameter(ext.GPU_DISJOINT_EXT);
+                let available = mTimingSupport.isAvailable(timing.query[prev]);
+                let disjoint = mTimingSupport.isDisjoint();
                 if (available && !disjoint) {
-                    let elapsed = gl.getQueryParameter(timing.query[prev], gl.QUERY_RESULT);
+                    let elapsed = mTimingSupport.getResult(timing.query[prev]);
                     timing.accumTime += elapsed * 1e-6;
                     timing.accumSamples++;
                 }
