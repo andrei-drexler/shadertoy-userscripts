@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy FPS limit
 // @namespace    http://tampermonkey.net/
-// @version      0.1.20190621
+// @version      0.2.20190709
 // @description  Configurable framerate limit
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -10,16 +10,34 @@
 // @grant        none
 // ==/UserScript==
 
-/* global Effect */
+/* global localStorage, Effect */
+/* eslint curly: 0, no-multi-spaces: 0 */
 
 (function() {
     'use strict';
 
     const PREDEFINED_LIMITS = [30, 48, 60, 72, 90, 100, 120, 144];
     const USE_PREDEFINED_LIMITS = false;
+    const FPS_LIMIT_KEY = "ext-fps-limit",
+          USE_FPS_LIMIT_KEY = "ext-use-fps-limit";
 
-    let useLimit = false,
-        targetFPS = 30,
+    function saveOption(key, value) {
+        if (!localStorage)
+            return false;
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            return false;
+        }
+        return true;
+    }
+
+    function loadOption(key) {
+        return localStorage && localStorage.getItem(key);
+    }
+
+    let useLimit = loadOption(USE_FPS_LIMIT_KEY) === "true",
+        targetFPS = loadOption(FPS_LIMIT_KEY) || 30,
         playerBar = document.getElementById("playerBar");
 
     if (playerBar) {
@@ -54,6 +72,7 @@
 
         limitInput.onchange = function(ev) {
             targetFPS = ev.target.value;
+            saveOption(FPS_LIMIT_KEY, targetFPS);
         };
 
         let canvas = document.getElementById("demogl");
@@ -81,6 +100,7 @@
         updateStatus();
         toggleLimit.onclick = function(ev) {
             useLimit = !useLimit;
+            saveOption(USE_FPS_LIMIT_KEY, useLimit);
             updateStatus();
         };
     }
