@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy FPS limit
 // @namespace    http://tampermonkey.net/
-// @version      0.2.20190709
+// @version      0.3.20190711
 // @description  Configurable framerate limit
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -10,7 +10,7 @@
 // @grant        none
 // ==/UserScript==
 
-/* global localStorage, Effect */
+/* global localStorage, Effect, watchResize:true */
 /* eslint curly: 0, no-multi-spaces: 0 */
 
 (function() {
@@ -76,6 +76,20 @@
         };
 
         let canvas = document.getElementById("demogl");
+        let myResolution = document.getElementById("myResolution");
+        if (myResolution && canvas) {
+            myResolution.style.left = "330px";
+            let oldWatchResize = watchResize;
+            watchResize = function() {
+                let result = oldWatchResize();
+                if (canvas.offsetWidth < 600)
+                    myResolution.style.visibility = "hidden";
+                else
+                    myResolution.style.visibility = "visible";
+                return result;
+            };
+        }
+
         function updateStatus() {
             if (useLimit) {
                 toggleLimit.text = "\u2243";
