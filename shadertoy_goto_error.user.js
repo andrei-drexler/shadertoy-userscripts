@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy error navigation
 // @namespace    http://tampermonkey.net/
-// @version      0.1.20190716
+// @version      0.2.20190717
 // @description  Go to first/prev/next error
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -112,6 +112,14 @@
             errorContainer.style.visibility = "hidden";
         }
         return result;
+    };
+
+    /* override recompilation to restore status visibility */
+    let oldSetShaderFromEditor = ShaderToy.prototype.SetShaderFromEditor;
+    ShaderToy.prototype.SetShaderFromEditor = function(...args) {
+        this.mCompilerTime.style.visibility = "visible";
+        errorContainer.style.visibility = "hidden";
+        return oldSetShaderFromEditor.apply(this, args);
     };
 
     /* override ShaderToy initialization to add prev error/next error editor keys */
