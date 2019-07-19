@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy error navigation
 // @namespace    http://tampermonkey.net/
-// @version      0.2.20190717
+// @version      0.3.20190719
 // @description  Go to first/prev/next error
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -61,15 +61,6 @@
     errorContainer.style = "position:absolute; width:180px; height:auto; left:64px; top:4px; visibility:hidden;";
     toolBar.appendChild(errorContainer);
 
-    let prevError = document.createElement("a");
-    prevError.id = "ext-prev-error";
-    prevError.text = "\u25C0";
-    prevError.classList.add("regular");
-    prevError.style.cursor = "pointer";
-    prevError.style.paddingRight = "8px";
-    prevError.title = "Go to previous error (Shift-F8)";
-    errorContainer.appendChild(prevError);
-
     let errorInfo = document.createElement("a");
     errorInfo.id = "ext-error-count";
     errorInfo.classList.add("regular");
@@ -77,12 +68,23 @@
     errorInfo.title = "Go to first error";
     errorContainer.appendChild(errorInfo);
 
+    let prevError = document.createElement("a");
+    prevError.id = "ext-prev-error";
+    prevError.text = "\u25C0";
+    prevError.classList.add("regular");
+    prevError.style.cursor = "pointer";
+    prevError.style.paddingLeft = "8px";
+    prevError.style.paddingRight = "4px";
+    prevError.title = "Go to previous error (Shift-F8)";
+    errorContainer.appendChild(prevError);
+
     let nextError = document.createElement("a");
     nextError.id = "ext-next-error";
     nextError.text = "\u25B6";
     nextError.classList.add("regular");
     nextError.style.cursor = "pointer";
-    nextError.style.paddingLeft = "8px";
+    nextError.style.paddingLeft = "4px";
+    nextError.style.paddingRight = "8px";
     nextError.title = "Go to next error (F8)";
     errorContainer.appendChild(nextError);
 
