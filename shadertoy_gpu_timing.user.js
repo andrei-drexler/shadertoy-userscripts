@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy GPU timing
 // @namespace    http://tampermonkey.net/
-// @version      0.7.20190706
+// @version      0.8.20200114
 // @description  Per-pass GPU timing HUD (click framerate display to toggle)
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -183,7 +183,8 @@
 
         let numPasses = 0,
             maxPassTime = 0,
-            minPassTime = Number.MAX_VALUE;
+            minPassTime = Number.MAX_VALUE,
+            totalTime = 0;
 
         for (let pass of gShaderToy.mEffect.mPasses) {
             let timing = pass.mTiming;
@@ -198,15 +199,18 @@
                 continue;
             maxPassTime = Math.max(maxPassTime, timing.average);
             minPassTime = Math.min(minPassTime, timing.average);
+            totalTime += timing.average;
             ++numPasses;
         }
         if (!numPasses)
             return;
 
+        /* include 'Total' line, if more than 1 pass */
+        let numLines = numPasses + (numPasses > 1);
         perfCtx.clearRect(0, 0, perfCanvas.width, perfCanvas.height);
         perfCtx.fillStyle = "#000a";
         perfCtx.shadowColor = "#0000";
-        perfCtx.fillRect(0, 0, perfCanvas.width, numPasses * LINE_HEIGHT + MARGIN_Y * 2);
+        perfCtx.fillRect(0, 0, perfCanvas.width, numLines * LINE_HEIGHT + MARGIN_Y * 2);
         perfCtx.shadowColor = "#0008";
 
         function mix(a, b, f) {
@@ -227,17 +231,25 @@
         }
 
         let index = 0;
+
+        function print(name, time, color) {
+            let y = MARGIN_Y + (index + 0.5) * LINE_HEIGHT;
+            perfCtx.fillStyle = color || getColor(time);
+            perfCtx.textAlign = "left";
+            perfCtx.fillText(name, MARGIN_X, y);
+            perfCtx.textAlign = "right";
+            perfCtx.fillText(`${(time).toFixed(2)}ms`, perfCanvas.width - MARGIN_X, y);
+            ++index;
+        }
+
         for (let pass of gShaderToy.mEffect.mPasses) {
             let timing = pass.mTiming;
             if (!timing || timing.average === undefined)
                 continue;
-            let y = MARGIN_Y + (index + 0.5) * LINE_HEIGHT;
-            perfCtx.fillStyle = getColor(timing.average);
-            perfCtx.textAlign = "left";
-            perfCtx.fillText(pass.mName, MARGIN_X, y);
-            perfCtx.textAlign = "right";
-            perfCtx.fillText(`${(timing.average).toFixed(2)}ms`, perfCanvas.width - MARGIN_X, y);
-            ++index;
+            print(pass.mName, timing.average);
+        }
+        if (numPasses > 1) {
+            print("Total", totalTime, "#fff");
         }
     }
 
