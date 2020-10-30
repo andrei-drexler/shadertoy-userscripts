@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy FPS limit
 // @namespace    http://tampermonkey.net/
-// @version      0.3.20190711
+// @version      0.4.20201030
 // @description  Configurable framerate limit
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -10,7 +10,7 @@
 // @grant        none
 // ==/UserScript==
 
-/* global localStorage, Effect, watchResize:true */
+/* global Effect */
 /* eslint curly: 0, no-multi-spaces: 0 */
 
 (function() {
@@ -78,16 +78,36 @@
         let canvas = document.getElementById("demogl");
         let myResolution = document.getElementById("myResolution");
         if (myResolution && canvas) {
+            /* move resolution info to the right a bit */
             myResolution.style.left = "330px";
-            let oldWatchResize = watchResize;
-            watchResize = function() {
-                let result = oldWatchResize();
-                if (canvas.offsetWidth < 600)
-                    myResolution.style.visibility = "hidden";
-                else
-                    myResolution.style.visibility = "visible";
-                return result;
-            };
+
+            /* hide resolution info when there's not enough space for it */
+            if (window.ResizeObserver) {
+                let resizeObserver = new ResizeObserver(entries => {
+                    var boxSize;
+                    for (let entry of entries) {
+                        if (entry.contentBoxSize) {
+                            if (entry.contentBoxSize[0]) {
+                                boxSize = entry.contentBoxSize[0].inlineSize;
+                            } else {
+                                boxSize = entry.contentBoxSize.inlineSize;
+                            }
+                        } else {
+                            boxSize = entry.contentRect.width;
+                        }
+                        if (boxSize < 600) {
+                            myResolution.style.visibility = "hidden";
+                        } else {
+                            myResolution.style.visibility = "visible";
+                        }
+                    }
+                });
+                try {
+                    resizeObserver.observe(myResolution.parentElement);
+                } catch (e) {
+                    console.log("Warning: unable to attach resize observer");
+                }
+            }
         }
 
         function updateStatus() {
@@ -119,6 +139,7 @@
         };
     }
 
+    /* override RequestAnimationFrame to add throttling */
     let nextTime = performance.now();
     let oldRAF = Effect.prototype.RequestAnimationFrame;
     Effect.prototype.RequestAnimationFrame = function(id) {
