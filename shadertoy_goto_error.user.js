@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shadertoy error navigation
 // @namespace    http://tampermonkey.net/
-// @version      0.3.20190719
+// @version      0.4.20201030
 // @description  Go to first/prev/next error
 // @author       Andrei Drexler
 // @match        https://www.shadertoy.com/view/*
@@ -58,7 +58,7 @@
     /* create UI elements */
     let errorContainer = document.createElement("div");
     errorContainer.id = "ext-error-info"
-    errorContainer.style = "position:absolute; width:180px; height:auto; left:64px; top:4px; visibility:hidden;";
+    errorContainer.style = "position:absolute; width:180px; height:auto; left:64px; top:4px; visibility:hidden; user-select:none;";
     toolBar.appendChild(errorContainer);
 
     let errorInfo = document.createElement("a");
@@ -98,7 +98,7 @@
         let result = oldSetErrors.apply(this, args);
         let errors = gShaderToy && gShaderToy.mErrors;
         if (errors && errors.length) {
-            this.mCompilerTime.style.visibility = "hidden";
+            this.mEleCompilerTime.style.visibility = "hidden";
             if (errors.length == 1) {
                 errorInfo.text = `1 error`;
                 prevError.style.display = "none";
@@ -110,7 +110,7 @@
             }
             errorContainer.style.visibility = "visible";
         } else {
-            this.mCompilerTime.style.visibility = "visible";
+            this.mEleCompilerTime.style.visibility = "visible";
             errorContainer.style.visibility = "hidden";
         }
         return result;
@@ -119,7 +119,7 @@
     /* override recompilation to restore status visibility */
     let oldSetShaderFromEditor = ShaderToy.prototype.SetShaderFromEditor;
     ShaderToy.prototype.SetShaderFromEditor = function(...args) {
-        this.mCompilerTime.style.visibility = "visible";
+        this.mEleCompilerTime.style.visibility = "visible";
         errorContainer.style.visibility = "hidden";
         return oldSetShaderFromEditor.apply(this, args);
     };
